@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Debtors Audit</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<!-- <link rel="icon" type="image/png" href="/images/icons/favicon.ico" /> -->
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/bootstrap/css/bootstrap.min.css">
+<script	src="/vendor/jquery/jquery-3.5.1.min.js"></script>
+<script	src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/vendor/datatables/dataTables.bootstrap4.min.css">
+<script	src="/vendor/datatables/jquery.dataTables.min.js"></script>
+<script	src="/vendor/datatables/moment.min.js"></script>
+<script	src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+<!-- For charts -->	
+		<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>		
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/css/util.css">
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+<!--===============================================================================================-->
+<script type="text/javascript">
+			$(document).ready( function() {
+				/* $('#debtorsFindings').DataTable().clear().destroy();
+	            $('#debtorsFindings').DataTable({
+	            	"lengthChange": false
+	            }); */
+	            getAuditCompany();
+				/* $.ajax({
+			        url: "/getCashBookDetails",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#cashbookfiledetails').DataTable().clear().destroy();
+			            $('#cashbookfiledetails').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "date" },
+			                    { data: "txnType" },
+			                    { data: "particulars" },
+			                    { data: "vchtype" },
+			                    { data: "vchno" },
+			                    { data: "debit" },
+			                    { data: "credit" }			                    
+			                ],
+			                "columnDefs":[{
+			   	                 "targets":0,//column index
+			   	                 "data":"",
+			   	                 "render":function(data,type,row){
+			   	                  var res = data.substring(0, 10) +" "+data.substring(24,28);
+			   	                 
+			   	  				  return res;
+			   	              }
+			   	             }],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	
+				$.ajax({
+			        url: "/getCashBookReport",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#cashbookreport').DataTable().clear().destroy();
+			            $('#cashbookreport').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "date" },
+			                    { data: "txnType" },
+			                    { data: "particulars" },
+			                    { data: "vchtype" },
+			                    { data: "vchno" },
+			                    { data: "debit" },
+			                    { data: "credit" }			                    
+			                ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	 */
+			});
+	
+			/* $('#generateReport').click(function(){
+				$('#generateModal').modal('show');
+			}); */
+			function getAuditCompany(){
+				$.ajax({
+					url : "/getAuditCompany",
+					type : "GET",
+					async : false,
+					contentType : "application/j-son;charset=UTF-8",
+					dataType : "json",
+					contentType: "json",
+					crossDomain : true,
+					success : function(data) {
+						console.log(data);
+						$('#auditCompany').val(data.auditCompany);
+						$('#auditYear').val(data.audityear);
+						if(data.auditCompany != ""){
+							showCompanyLabel();
+							getStatus();
+						}
+					}
+				});
+			}
+			function showCompanyLabel(){
+				var companyName = $("#auditCompany>option:selected").text();
+				var finyear = $("#auditYear>option:selected").text();
+				var comments = '';
+				
+				 $("#companyfinalabel").html(companyName +" | "+finyear);
+				 $('#companyhead').css("display","block");
+			}
+			function logout(){
+				window.location.href = "/logout";
+			}
+			
+			function getDebtorsFinding(e){
+				//alert(11);
+				e.preventDefault();
+				getStatus();				
+			}
+			
+			function getStatus(){
+				var cmpnyid = $("#auditCompany>option:selected").val();
+				
+				var companyName = $("#auditCompany>option:selected").text();
+				var finyear = $("#auditYear>option:selected").text();
+				var comments = '';
+				
+				//alert(cmpnyid);
+				 $.ajax({
+			        url: "/getDebtorsFindings?companyid="+cmpnyid,
+			        type: "GET",
+			        async: false,
+			        cache: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			        	console.log(data.length);
+			        	 $('#cashauditcomments').html(comments);
+					     $("#companyfinalabel").html(companyName +" | "+finyear);
+						$('#companyhead').css("display","block");
+						if(data.length == 0){
+							 $('#debtorsFindings').css("display","none");
+							 $("#nosuchrecord").css("display","block");
+						}
+						else{
+							$('#debtorsFindings').DataTable().clear().destroy();
+				            $('#debtorsFindings').DataTable({
+
+				                data: data,
+				                columns: [
+				                    { data: "particulars" },
+				                    { data: "debit" },
+				                    { data: "credit" },
+				                    { data: "openingBalance" },
+				                    { data: "closingBalance" }		                    
+				                ],
+				                dom: 'Bfrtip',
+				                buttons: [
+				                    'copy', 'csv', 'excel', 'pdf', 'print'
+				                ],
+				                
+				            });
+						}
+			            
+			        }
+			    });
+				 $.ajax({
+				        url: "/getDebtorsFindingsCr?companyid="+cmpnyid,
+				        type: "GET",
+				        async: false,
+				        cache: false,
+				        contentType: "application/j-son;charset=UTF-8",
+				        dataType: "json",
+				        crossDomain: true,
+				        success: function (data) {
+				        	console.log(data.length);
+				        	 $('#cashauditcomments').html(comments);
+						     $("#companyfinalabel").html(companyName +" | "+finyear);
+							$('#companyhead').css("display","block");
+							if(data.length == 0){
+								 /* $('#debtorsFindings').css("display","none");
+								 $("#nosuchrecord").css("display","block"); */
+							}
+							else{
+								$('#debtorsCredit').DataTable().clear().destroy();
+					            $('#debtorsCredit').DataTable({
+
+					                data: data,
+					                columns: [
+					                    { data: "particulars" },
+					                    { data: "closingBalance" },
+					                    {
+						                    data: "particulars",
+						                    mRender: function (
+						                        data, type,
+						                        full) {
+						                        return "<button style=\"width: 55px;\" class=\"btn\"><i class=\"fa fa-paperclip\" aria-hidden=\"true\" "
+						                        + " onclick=\"openAddSupportingModal('"
+						                         + data
+						                         + "')\"></i></button>";
+						                    }
+						                }
+					                ],
+					                "columnDefs" : [ {
+										"targets" : 1,//column index
+										"data" : "closingBalance",
+										"render" : function(data, type,
+												row) {
+											  	/* data = (Math
+													.round(data * 100) / 100)
+													.toFixed(2); */ 
+											 
+													 data=data.toString();
+													    var afterPoint = '';
+													    if(data.indexOf('.') > 0)
+													       afterPoint = data.substring(data.indexOf('.'),data.length); 
+													    //data = Math.floor(data);
+													    data=data.toString();
+													    var lastThree = data.substring(data.length-3);
+													    var otherNumbers = data.substring(0,data.length-3);
+													    if(otherNumbers != '')
+													        lastThree = '' + lastThree;
+													    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+													    console.log(res);
+													   
+											
+											return res;
+										}
+									} ],
+					                dom: 'Bfrtip',
+					                buttons: [
+					                    'copy', 'csv', 'excel', 'pdf', 'print'
+					                ]
+					            });
+							}
+				            
+				        }
+				    });
+				
+			}
+
+			function downloadfile(file){
+
+	//window.open("http://localhost:9093/downloadPDF?fileName="+file, '_blank');
+	window.open("http://jharvis.com:9093/downloadPDF?fileName="+file, '_blank');
+	
+}
+
+
+
+	function generatePDF() {
+		jQuery.ajax({
+			url : '/generatePDF',
+			type : "GET",
+			async : false,
+			cache : false,
+			//data: "",
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success Fully Submit"+data.responseStr);
+
+				window.open(data.responseStr, '_blank');
+
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+	function generatePDF1() {
+		jQuery.ajax({
+			url : '/generatePDF1',
+			type : "GET",
+			async : false,
+			cache : false,
+			//data: "",
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success Fully Submit"+data.responseStr);
+
+				window.open(data.responseStr, '_blank');
+
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+
+			
+			
+			function openAddSupportingModal(value) {
+				//	alert("openAddSupportingModal");
+				//	alert(value);
+					$('#particulars1').val(value);
+					$.ajax({
+						url : "/getSupportingDebtorFileDetails?particulars=" + value,
+						type : "GET",
+						async : false,
+						contentType : "application/j-son;charset=UTF-8",
+						dataType : "json",
+						crossDomain : true,
+						success : function(data) {
+							$('#supportinghistory').DataTable().clear().destroy();
+							$('#supportinghistory').DataTable({
+
+								data : data,
+								columns : [ {
+									data : "particulars"
+								}, {
+									data : "fileDetails",
+									mRender : function(data, type, full) {
+										return "<button style='width: 55px;' class='btn' onclick=downloadfile('"+data+"')><i class='fa fa-download' aria-hidden='true'></i></button>";
+									}
+								},{
+									data : "comments"
+								}
+								/* { data: "particulars" },
+								{ data: "vchtype" },
+								{ data: "vchno" },
+								{ data: "debit" },
+								{ data: "credit" }	 */
+								],
+								dom : 'Bfrtip',
+								buttons : [ 'copy', 'csv', 'excel', 'pdf', 'print' ]
+							});
+						}
+					});
+					$('#supportingdocmodal').modal('show');
+				}
+			
+			function openDebtorPaymentModal(){
+				$('#debtorpayment').modal('show');
+			}
+</script>
+<style>
+li {
+	display: inline-block;
+    padding: 12px;
+    cursor:pointer;
+}
+ul#navigatiobar{
+	/* padding:15px; */
+}
+li:hover{
+	background-color: #993c33;
+}
+li#uploadright{
+	float:right;
+	/* padding:0px; */	
+}
+li#companyhead{
+	float:right;
+	/* padding:0px; */	
+}
+.active{
+	background-color:#c65353;
+	
+}
+</style>
+</head>
+<body>
+
+	<section class="row">
+		<div class="col-lg-12 tm-form-header pl-5 pr-5">
+			<h2 class="tm-container-inner tm-text-color-white" style="font-size:1.5rem">Q -Audit - Debtors Audit findings</h2>
+			<h2 class="tm-container-inner tm-text-color-white"
+				style="float: right"> <span style="font-size: 1rem;">Welcome Admin</span>&nbsp;&nbsp;
+			
+				<button id="logoutbtn" style="color: white;" onclick="logout()">
+					<i class="fa fa-power-off" aria-hidden="true"></i>
+				</button>
+
+			</h2>
+		</div>
+		<div class="col-lg-12 pl-2 pl-sm-3 pl-md-5 pr-2 pr-sm-3 pr-md-5">
+			<div 
+				class="row tm-container-inner tm-contact-form">
+				
+				<div class="col-12">
+					<br>
+					<div class="row">
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select id="auditCompany">
+									<option value="">Select Company</option>
+									<option value="1">Confitech</option>
+									<option value="2">Qolaris</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select  id="auditYear">
+									<option value="" selected>Select Year</option>
+									<option value="2020" >2019-20</option>
+									<option value="2019">2018-19</option>
+									<option value="2018">2017-18</option>
+
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-sm-2">
+							<div class="upload-btn-wrapper">
+								<button style="padding: 15px;" class="btn"
+									onclick="getDebtorsFinding(event)">Go</button>
+
+							</div>
+						</div>
+						<div class="col-6">
+							
+							<div class="upload-btn-wrapper" style="float:right; margin-left:10px;">
+								<button id="generateReport" class="btn" style="padding: 15px;"
+									onclick="generatePDF()">Audit findings Report</button>
+							</div>
+							
+							<div class="upload-btn-wrapper" style="float:right;">
+								<button id="generateReport1" class="btn" style="padding: 15px;"
+									onclick="generatePDF1()">Audit Summary Report</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<br>
+				<div class="col-sm-12">
+					<!-- Navigation bar -->
+					<ul class="" id="navigatiobar" style="background-color: #993333">
+						<li class=""><a class="" href="/auditStatus"
+							style="color: white">Audit Summary</a></li>
+						<li class=""><a class="" href="/materiality"
+							style="color: white">Materiality</a></li>
+						<li class=""><a class="" href="/auditArea"
+							style="color: white;">Audit Areas</a></li>
+
+						<li class="active"><a class="" href="/auditReport"
+							style="color: white">Audit Findings</a></li>
+
+
+						<li class=""><a class="" href="/auditDetailsView"
+							style="color: white">Audit Data</a></li>
+						<!-- <li class="" id="uploadright"><a class="" href="/uploadfile"
+							style="color: white;">Upload File</a></li> -->
+						<li class="" id="companyhead" style="display: none;"><a
+							class="" style="color: white;"><span id="companyfinalabel"></span></a></li>
+					</ul>
+					<!-- Navigation bar -->
+				</div>
+
+			</div>
+		</div>
+	</section>
+	<div class="container-fluid" style="padding-left:100px;padding-right:100px;">
+		<div class="row">
+			<div class="col-lg-2">
+				<ul class="" id="sidebar" style="background-color: #993333">
+					<li class="" style="display: block;"><a class=""
+						href="/auditReport" style="color: white">Cash</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/bankAuditFindings" style="color: white">Bank</a></li>
+						
+					<li class="" style="display: block"><a class=""
+						href="/fixedAssetauditFindings" style="color: white">Fixed Assets</a></li>
+						
+					<li class="active" style="display: block"><a class=""
+						href="/debtorsAssetAuditFindings" style="color: white">Debtors</a></li>		
+				</ul>
+			</div>
+			<div class="col-lg-10">
+				<!-- <div class="upload-btn-wrapper" style="float: right;">
+					<button id="generateReport"
+						onclick="window.location.href = '/auditReport';" class="btn"
+						style="float: right; padding: 15px;">Upload file</button>
+				</div> -->
+				<!-- <br> <br> <br> -->
+				<div class="">
+					
+					<h3 style="color: #9a0606; font-size: 1rem;">Duplicate ledger accounts or balances maintaining for single debtor:</h3>
+					<br>
+					<h4 id="nosuchrecord" style="color: #9a0606; font-size: 1rem;display:none"><b>No such records found</b></h4>
+					<!-- <br>
+					<button class="btn" onclick="showGridMultiple()">Grid View</button>
+					&nbsp;&nbsp;
+					<button class="btn" onclick="showChartMultiple()">Chart
+						View</button> -->
+					<br>
+					<div id="paymentsinglevendorDiv">
+						<table class="table table-striped" id="debtorsFindings"
+							width="100%" cellspacing="0">
+							<thead>
+								<tr>
+									<th>Particulars</th>
+									<th>Debit</th>
+									<th>Credit</th>
+									<th>OpeningBalance</th>
+									<th>ClosingBalance</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<div id="paymentsinglevendorChartDiv" style="display: none">
+
+						CHART
+						<div id="chart7"></div>
+					</div>
+					<!-- <br>
+					<button class="btn" style="float: right;"
+						onclick="openMultiplePaymentModal()">Done</button> -->
+					<br>
+					<h3 style="color: #9a0606; font-size: 1rem;">Debtors with credit balances :</h3>
+					<div id="paymentsinglevendorDiv">
+						<table class="table table-striped" id="debtorsCredit"
+							width="100%" cellspacing="0">
+							<thead>
+								<tr>
+									<th>Particulars</th>
+									
+									<th>ClosingBalance</th>
+									<th>Supporting Document</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<button class="btn" style="float: right;"
+						onclick="openDebtorPaymentModal()">Done</button>
+				</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Supporting document Modal -->
+	<div class="modal fade" id="supportingdocmodal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Add Supporting</h5>
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					
+					<form action="/uploadDebtorSupportingfiles" enctype="multipart/form-data" method="POST" >
+						<input type="hidden" id="particulars1" name="particulars1"> 
+						<input type="file" name="supportingdocs"><br><br>
+						<textarea rows="5" cols="21" id="supportingcomments" class="form-control" placeholder="Comments..." name="comments"></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form><br><br>
+					<h5 class="modal-title" id="exampleModalLabel">Supporting History</h5><hr>
+					<table class="table table-striped" id="supportinghistory" width="100%"
+						cellspacing="0">
+						<thead>
+							<tr>
+								<th>Particulars</th>
+								<th>Files</th>
+								<th>Comments</th>
+
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<!-- <div class="modal-footer">
+					
+					
+				</div> -->
+			</div>
+		</div>
+	</div>
+	
+	
+	<!-- Cash payment above 20000 -->
+	<div class="modal fade" id="debtorpayment" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+				<form action="/getDoneDebtorPaymentModal" enctype="multipart/form-data" method="POST" >
+					<input type="file" name="debtorfile" id="debtorfile"><br><br>
+					<textarea rows="5" cols="21" id="debtorabove" name="debtorComment" class="form-control" placeholder="Comments..."></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form>
+				</div>
+				<!-- <div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" onclick="getDoneBankPayment()">Done</button>
+					<button type="button" class="btn btn-primary">Save changes</button>
+				</div> -->
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<p class="text-center small tm-copyright-text mb-0">
+				Copyright &copy; <span class="tm-current-year">2020</span> <a href='http://qolarisdata.com/'>Qolaris Data India Pvt Ltd.</a> All Rights Reserved | 
+Designed by <a href='http://confitechsol.com/'>Confitech Solutions</a>
+			</p>
+		</div>
+	</div>
+	</div>
+</body>
+</html>

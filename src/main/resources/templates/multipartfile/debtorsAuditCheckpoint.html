@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Debtors Audit</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<!-- <link rel="icon" type="image/png" href="/images/icons/favicon.ico" /> -->
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/bootstrap/css/bootstrap.min.css">
+<script	src="/vendor/jquery/jquery-3.5.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="/vendor/datatables/dataTables.bootstrap4.min.css">
+<script	src="/vendor/datatables/jquery.dataTables.min.js"></script>
+<script	src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/css/util.css">
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+<!--===============================================================================================-->
+<script type="text/javascript">
+			$(document).ready( function() {
+				getAuditCompany();
+				getDebtorAuditStatus();
+				/* $.ajax({
+			        url: "/getCashBookDetails",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#cashbookfiledetails').DataTable().clear().destroy();
+			            $('#cashbookfiledetails').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "date" },
+			                    { data: "txnType" },
+			                    { data: "particulars" },
+			                    { data: "vchtype" },
+			                    { data: "vchno" },
+			                    { data: "debit" },
+			                    { data: "credit" }			                    
+			                ],
+			                "columnDefs":[{
+			   	                 "targets":0,//column index
+			   	                 "data":"",
+			   	                 "render":function(data,type,row){
+			   	                  var res = data.substring(0, 10) +" "+data.substring(24,28);
+			   	                 
+			   	  				  return res;
+			   	              }
+			   	             }],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	
+				$.ajax({
+			        url: "/getCashBookReport",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#cashbookreport').DataTable().clear().destroy();
+			            $('#cashbookreport').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "date" },
+			                    { data: "txnType" },
+			                    { data: "particulars" },
+			                    { data: "vchtype" },
+			                    { data: "vchno" },
+			                    { data: "debit" },
+			                    { data: "credit" }			                    
+			                ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	 */
+			});
+	
+			/* $('#generateReport').click(function(){
+				$('#generateModal').modal('show');
+			}); */
+			
+			function logout(){
+				window.location.href = "/logout";
+			}
+			
+			function goToDebtorFindings(){
+				window.location.href = "/debtorsAssetAuditFindings";
+			}
+			function getAuditCompany(){
+				$.ajax({
+					url : "/getAuditCompany",
+					type : "GET",
+					async : false,
+					contentType : "application/j-son;charset=UTF-8",
+					dataType : "json",
+					contentType: "json",
+					crossDomain : true,
+					success : function(data) {
+						console.log(data);
+						$('#debtCompany').val(data.auditCompany);
+						$('#debtYear').val(data.audityear);
+						showCompanyLabel();
+					}
+				});
+			}
+			function showCompanyLabel(){
+				var companyName = $("#debtCompany>option:selected").text();
+				var finyear = $("#debtYear>option:selected").text();
+				var comments = '';
+				
+				 $("#companyfinalabel").html(companyName +" | "+finyear);
+				 $('#companyhead').css("display","block");
+			}
+						
+				function getDebtorAuditStatus() {
+					
+					//var auditMonth = $("#auditMonth>option:selected").val();
+					var auditYear = $("#debtYear>option:selected").val();
+					var auditCompany = $("#debtCompany>option:selected").val();
+					var companyName = $("#debtCompany>option:selected").text();
+					var finyear = $("#debtYear>option:selected").text();
+					var comments = '';
+					var filedetails='';
+									
+
+					jQuery.ajax({
+					    url: '/getAuditStatus',
+					    type: "POST",
+					    async: false,
+					    cache: false,
+					    data: "auditYear=" + auditYear + "&auditCompany="
+					     + auditCompany,
+					    dataType: "json",
+					    success: function (data) {
+					        console.log(data.length);
+					       
+					       
+					        $.each(data, function (index, itemData) {
+					            console
+					            .log(data[index]
+					                 + ": "
+					                 + data[index].sub_status_name
+					                 + "\n");
+
+					            
+					            if (data[index].sub_status_name == 'Debtors with credit balances') {
+					            	//alert("debtor");
+					                $('#debtorcol').css(
+					                    "background-color",
+					                    "green");
+					                $('#debtorcol').html("Complete");
+					                $('#debtorcol').css(
+						                    "color",
+						                    "black");
+					               $('#commentdeb').html(data[index].comment);
+					               //$('#attachdeb').html("<a href="+data[index].fileDetails+" download>Attached Document</a>");
+					               $('#attachdeb').html("<button style='width: 55px;' class='btn' onclick=downloadfile('"+data[index].fileDetails+"')><i class='fa fa-download' aria-hidden='true'></i></button>");
+					              
+					            }
+					            
+					            comments = comments + data[index].comment+" ";
+
+					        });
+					      
+					    },
+					    error: function (e) {
+					    }
+
+					});
+				}
+				
+				function downloadfile(file){
+
+					//window.open("http://localhost:9093/downloadPDF?fileName="+file, '_blank');
+					window.open("http://jharvis.com:9093/downloadPDF?fileName="+file, '_blank');
+					//alert(file);
+					//window.location= "/download?filepath="+file;
+				}
+
+			
+</script>
+<style>
+li {
+	display: inline-block;
+    padding: 12px;
+    cursor:pointer;
+}
+ul#navigatiobar{
+	/* padding:15px; */
+}
+li:hover{
+	background-color: #993c33;
+}
+li#uploadright{
+	float:right;
+	/* padding:0px; */	
+}
+li#companyhead{
+	float:right;
+	/* padding:0px; */	
+}
+.active{
+	background-color:#c65353;
+	
+}
+</style>
+</head>
+<body>
+
+	<section class="row">
+		<div class="col-lg-12 tm-form-header pl-5 pr-5">
+			<h2 class="tm-container-inner tm-text-color-white" style="font-size:1.5rem">Q -Audit - Debtors Audit checkpoint</h2>
+			<h2 class="tm-container-inner tm-text-color-white"
+				style="float: right"> <span style="font-size: 1rem;">Welcome Admin</span>&nbsp;&nbsp;
+			
+				<button id="logoutbtn" style="color: white;" onclick="logout()">
+					<i class="fa fa-power-off" aria-hidden="true"></i>
+				</button>
+
+			</h2>
+		</div>
+		<div class="col-lg-12 pl-2 pl-sm-3 pl-md-5 pr-2 pr-sm-3 pr-md-5">
+			<form method="POST" enctype="multipart/form-data" id="fileUploadForm"
+				action="/uploadDebtorfile" class="row tm-container-inner tm-contact-form">
+				<!-- <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"> -->
+				<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+					<br>
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="form-group">
+								<select name="debtCompany" id="debtCompany">
+									<option value="">Select Company</option>
+									<option value="1">Confitech</option>
+									<option value="2">Qolaris</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-4">
+							<div class="form-group">
+								<select name="debtYear" id="debtYear">
+									<option value="" selected>Select Year</option>
+									<option value="2020">2019-20</option>
+									<option value="2019">2018-19</option>
+									<option value="2018">2017-18</option>
+
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-4">
+							<div class="upload-btn-wrapper">
+								<button type="submit"
+									style="cursor: pointer;  float: right;  padding: 15px;"
+									class="btn">Upload File</button>
+								<input type="file" name="uploadDebtfile" id="uploadDebtfile"
+									onchange="this.form.submit()" />
+							</div>
+							</div>
+							<div style="padding-left: 2%; padding-right: 100px;" th:if="${message}">
+						<span th:text="${message}" />
+		 
+					</div>
+
+						<!-- <div class="col-sm-4">
+							<div class="upload-btn-wrapper">
+								<button style="padding: 15px;" class="btn"
+									onclick="getAuditStatus(event)">Go</button>
+
+							</div>
+						</div> -->
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<!-- Navigation bar -->
+					<ul class="" id="navigatiobar" style="background-color: #993333">
+						<li class=""><a class="" href="/auditStatus"
+							style="color: white">Audit Summary</a></li>
+						<li class=""><a class="" href="/materiality"
+							style="color: white">Materiality</a></li>
+						<li class="active"><a class="" href="/auditArea"
+							style="color: white;">Audit Areas</a></li>
+
+						<li class=""><a class="" href="/auditReport"
+							style="color: white">Audit Findings</a></li>
+
+
+						<li class=""><a class="" href="/auditDetailsView"
+							style="color: white">Audit Data</a></li>
+						<!-- <li class="" id="uploadright"><a class="" href="/uploadfile"
+							style="color: white;">Upload File</a></li> -->
+						<li class="" id="companyhead" style="display: none;"><a
+							class="" style="color: white;"><span id="companyfinalabel"></span></a></li>
+					</ul>
+					<!-- Navigation bar -->
+				</div>
+		
+			</form>
+		</div>
+	</section>		
+
+	<div class="container-fluid" style="padding-left:100px;padding-right:100px;">
+		<div class="row">
+			<div class="col-lg-2">
+				<ul class="" id="sidebar" style="background-color: #993333">
+					<li class="" style="display: block;"><a class="" href="/auditArea"
+						style="color: white">Cash</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/bankAudit" style="color: white">Bank</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/fixedAsset" style="color: white">Fixed Assets</a></li>
+
+					<li class="active" style="display: block"><a class=""
+						href="/debtorsAsset" style="color: white">Debtors</a></li>
+					
+					<li class="" style="display: block"><a class="" href="/investment"
+						style="color: white">Investments</a></li>
+					<li class="" style="display: block"><a class="" href="/debtorsandothers"
+						style="color: white">Debtors and other receivables</a></li>
+					<li class="" style="display: block"><a class="" href="/inventory"
+						style="color: white">Inventory</a></li>
+					<li class="" style="display: block"><a class="" href="/loansadvance"
+						style="color: white">Loans and Advances</a></li>
+					<li class="" style="display: block"><a class="" href="/depreciation"
+						style="color: white">Depreciation</a></li>
+				</ul>
+			</div>
+			
+			<br> <br> <br>
+			<div class="col-lg-10">
+				<table class="table table-striped" id="cashbookfiledetails"
+					width="100%" cellspacing="0">
+					<thead>
+						<tr>
+							<th>Audit Checkpoint</th>
+							<th>Status</th>
+							<th>Comments</th>
+							<th>Action</th>
+							<th>Attach document ref</th>
+
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Check whether there are controls in place to ensure that
+								invoices cannot be recorded more than once.</td>
+							<td>Pending</td>
+							<td></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Verify period end accounts receivable ageing report with
+								general ledger.</td>
+							<td>Pending</td>
+							<td></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Collect and verify balance confirmations</td>
+							<td>Pending</td>
+							<td></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><b>Find duplicate ledger accounts or balances maintaining
+								for single debtor</b></td>
+							<td>Pending</td>
+							<td></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Perform analytical procedures on large debtors</td>
+							<td>Pending</td>
+							<td></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><b>Select and enquire – debtors with credit balances</b></td>
+							<td id="debtorcol">Pending</td>
+							<td id="commentdeb"></td>
+							<td><button style="width: 55px;" class="btn" onclick="goToDebtorFindings()">
+									<i class="fa fa-search" aria-hidden="true"></i>
+								</button></td>
+							<td id="attachdeb"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		</div>
+	</div>
+	
+	
+	<div class="row">
+		<div class="col-lg-12">
+			<p class="text-center small tm-copyright-text mb-0">
+				Copyright &copy; <span class="tm-current-year">2020</span> <a href='http://qolarisdata.com/'>Qolaris Data India Pvt Ltd.</a> All Rights Reserved | 
+Designed by <a href='http://confitechsol.com/'>Confitech Solutions</a>
+			</p>
+		</div>
+	</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Debtors Audit</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<!-- <link rel="icon" type="image/png" href="/images/icons/favicon.ico" /> -->
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/bootstrap/css/bootstrap.min.css">
+<script	src="/vendor/jquery/jquery-3.5.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="/vendor/datatables/dataTables.bootstrap4.min.css">
+<script	src="/vendor/datatables/jquery.dataTables.min.js"></script>
+<script	src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/css/util.css">
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+<!--===============================================================================================-->
+<script type="text/javascript">
+			$(document).ready( function() {
+				 $('#materialityfindings').DataTable().clear().destroy();
+		            $('#materialityfindings').DataTable({
+		            	"lengthChange": false
+		            });
+		            getAuditCompany();	
+				 /*$.ajax({
+			        url: "/getCashBookReport",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#cashbookreport').DataTable().clear().destroy();
+			            $('#cashbookreport').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "date" },
+			                    { data: "txnType" },
+			                    { data: "particulars" },
+			                    { data: "vchtype" },
+			                    { data: "vchno" },
+			                    { data: "debit" },
+			                    { data: "credit" }			                    
+			                ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	 */
+			});
+	
+			/* $('#generateReport').click(function(){
+				$('#generateModal').modal('show');
+			}); */
+			function getAuditCompany(){
+				$.ajax({
+					url : "/getAuditCompany",
+					type : "GET",
+					async : false,
+					contentType : "application/j-son;charset=UTF-8",
+					dataType : "json",
+					contentType: "json",
+					crossDomain : true,
+					success : function(data) {
+						console.log(data);
+						$('#meterialityCompany').val(data.auditCompany);
+						$('#meterialityYear').val(data.audityear);
+						if(data.auditCompany != ""){
+							showCompanyLabel();
+							getStatus();
+						}
+					}
+				});
+			}
+			
+			function showCompanyLabel(){
+				var companyName = $("#meterialityCompany>option:selected").text();
+				var finyear = $("#meterialityYear>option:selected").text();
+				var comments = '';
+				
+				 $("#companyfinalabel").html(companyName +" | "+finyear);
+				 $('#companyhead').css("display","block");
+			}
+			
+			function logout(){
+				window.location.href = "/logout";
+			}
+			
+			function getMaterialityStatus(e){
+				e.preventDefault();
+				getStatus();
+			}
+			
+			function getStatus(){
+				var auditCompany = $("#meterialityCompany>option:selected").val();
+				
+				var companyName = $("#meterialityCompany>option:selected").text();
+				var finyear = $("#meterialityYear>option:selected").text();
+				var comments = '';
+				
+				
+				 $.ajax({
+			        url: "/getMaterialityReport?companyId="+auditCompany,
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			        	$('#cashauditcomments').html(comments);
+					     $("#companyfinalabel").html(companyName +" | "+finyear);
+						$('#companyhead').css("display","block");
+						
+			            $('#materialityfindings').DataTable().clear().destroy();
+			            $('#materialityfindings').DataTable({
+
+			                data: data,
+			                columns: [
+			                    { data: "particulars" },
+			                    { data: "value" },
+			                    { data: "perofmat" },
+			                    { data: "newvalue" }
+			                    		                    
+			                ],
+			               "columnDefs":[{
+			   	                
+			                	"targets" : 3,//column index
+			                	"data" : "newvalue",
+			                	"render" : function(data, type, row) {
+			                		
+			                		
+			                		 data = (Math
+												.round(data * 100) / 100)
+												.toFixed(2); 
+										 
+												 data=data.toString();
+												    var afterPoint = '';
+												    if(data.indexOf('.') > 0)
+												       afterPoint = data.substring(data.indexOf('.'),data.length);
+												    data = Math.floor(data);
+												    data=data.toString();
+												    var lastThree = data.substring(data.length-3);
+												    var otherNumbers = data.substring(0,data.length-3);
+												    if(otherNumbers != '')
+												        lastThree = ',' + lastThree;
+												    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+			                		
+			                		
+			                		return res;
+
+			                	}
+			                
+			   	             },
+			   	          {
+									"targets" : 1,//column index
+									"data" : "value",
+									"render" : function(data, type,
+											row) {
+										  data = (Math
+												.round(data * 100) / 100)
+												.toFixed(2); 
+										 
+												 data=data.toString();
+												    var afterPoint = '';
+												    if(data.indexOf('.') > 0)
+												       afterPoint = data.substring(data.indexOf('.'),data.length);
+												    data = Math.floor(data);
+												    data=data.toString();
+												    var lastThree = data.substring(data.length-3);
+												    var otherNumbers = data.substring(0,data.length-3);
+												    if(otherNumbers != '')
+												        lastThree = ',' + lastThree;
+												    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+												    console.log(res);
+												   
+										
+										return res;
+									}
+								}
+			   	             ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });
+				
+				
+				 
+				$("#finalmatvalue").text($("#materialityfindings tr:eq(2) > td:eq(3)").text());
+			}
+</script>
+<style>
+li {
+	display: inline-block;
+    padding: 12px;
+    cursor:pointer;
+}
+ul#navigatiobar{
+	/* padding:15px; */
+}
+li:hover{
+	background-color: #993c33;
+}
+li#uploadright{
+	float:right;
+	/* padding:0px; */	
+}
+li#companyhead{
+	float:right;
+	/* padding:0px; */	
+}
+.active{
+	background-color:#c65353;
+	
+}
+</style>
+</head>
+<body>
+
+	<section class="row">
+		<div class="col-lg-12 tm-form-header pl-5 pr-5">
+			<h2 class="tm-container-inner tm-text-color-white" style="font-size:1.5rem">Q -Audit - Materiality</h2>
+			<h2 class="tm-container-inner tm-text-color-white"
+				style="float: right"> <span style="font-size: 1rem;">Welcome Admin</span>&nbsp;&nbsp;
+			
+				<button id="logoutbtn" style="color: white;" onclick="logout()">
+					<i class="fa fa-power-off" aria-hidden="true"></i>
+				</button>
+
+			</h2>
+		</div>
+		<div class="col-lg-12 pl-2 pl-sm-3 pl-md-5 pr-2 pr-sm-3 pr-md-5">
+			<form method="POST" enctype="multipart/form-data" id="fileUploadForm"
+				action="/uploadTrialBalnfile"
+				class="row tm-container-inner tm-contact-form">
+				<!-- <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"> -->
+				<div class="col-sm-12">
+					<!-- Navigation bar -->
+					<ul class="" id="navigatiobar" style="background-color: #993333">
+						<li class=""><a class="" href="/auditStatus"
+							style="color: white">Audit Summary</a></li>
+						<li class="active"><a class="" href="/materiality"
+							style="color: white">Materiality</a></li>
+						<li class=""><a class="" href="/auditArea"
+							style="color: white;">Audit Areas</a></li>
+
+						<li class=""><a class="" href="/auditReport"
+							style="color: white">Audit Findings</a></li>
+
+
+						<li class=""><a class="" href="/auditDetailsView"
+							style="color: white">Audit Data</a></li>
+						<!-- <li class="" id="uploadright"><a class="" href="/uploadfile"
+							style="color: white;">Upload File</a></li> -->
+						<li class="" id="companyhead" style="display: none;"><a
+							class="" style="color: white;"><span id="companyfinalabel"></span></a></li>
+					</ul>
+					<!-- Navigation bar -->
+				</div>
+				
+				<div class="container-fluid">
+				<br>
+					<div class="row">
+
+						<div class="col-sm-3">
+							<div class="form-group">
+								<select name="meterialityCompany" id="meterialityCompany">
+									<option value="">Select Client</option>
+									<option value="1">Confitech</option>
+									<option value="2">Qolaris</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<select name="meterialityYear" id="meterialityYear">
+									<option value="" selected>Select Year</option>
+									<option value="2020">2019-20</option>
+									<option value="2019">2018-19</option>
+									<option value="2018">2017-18</option>
+
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-sm-3">
+							<div class="upload-btn-wrapper">
+								<button type="submit"
+									style="cursor: pointer; float: right; padding: 15px;"
+									class="btn">Upload Trial Balance</button>
+								<input type="file" name="uploadTrialBlnfile"
+									id="uploadTrialBlnfile" onchange="this.form.submit()" />
+							</div>
+						</div>
+						
+						<div class="col-sm-3" style="text-align:right;">
+							<div class="upload-btn-wrapper">
+								<button style="padding: 15px;" class="btn"
+									onclick="getMaterialityStatus(event)">Go</button>
+
+							</div>
+						</div>
+					</div>
+
+					<div style="" th:if="${message}">
+						<span th:text="${message}" />
+
+					</div>
+					</form>
+					<!-- Table -->
+					<div class="row">
+						<div class="col-lg-12">
+							<table class="table table-striped" id="materialityfindings"
+								width="100%" cellspacing="0">
+								<thead>
+									<tr>
+										<th>Item</th>
+										<th>Value</th>
+										<th>% of Materiality</th>
+										<th>Value</th>
+									</tr>
+								</thead>
+							</table>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-lg-6">
+							<table class="table table-striped" style="background-color:#993333; color:white;"
+								width="100%" cellspacing="0">
+								<thead>
+									<tr>
+										<td>Final Materiality value</td>
+										<td id="finalmatvalue"></td>
+										
+									</tr>
+									<!-- <tr>
+										<td id="finalmatvalue"></td>
+										
+									</tr> -->
+								</thead>
+							</table>
+						</div>
+					</div>
+				</div>
+
+
+				
+		</div>
+
+
+
+		<!-- <div class="container-fluid" style="padding-left:100px;padding-right:100px;">
+		<div class="row">
+			<div class="col-lg-2">
+				<ul class="" id="sidebar" style="background-color: #993333">
+					<li class="" style="display: block;"><a class="" href=""
+						style="color: white">Cash</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/bankAudit" style="color: white">Bank</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/fixedAsset" style="color: white">Fixed Assets</a></li>
+
+					<li class="active" style="display: block"><a class=""
+						href="/debtorsAsset" style="color: white">Debtors</a></li>
+				</ul>
+			</div>
+			<div class="col-lg-12">
+				<div class="upload-btn-wrapper" style="float: right;">
+					<button id="generateReport"
+						onclick="window.location.href = '/auditReport';" class="btn"
+						style="float: right; padding: 15px;">Upload Trial Balance</button>
+						<button type="submit" style="cursor: pointer; float: right; padding: 15px;"
+									class="btn">Upload Trial Balance</button>
+								<input type="file" name="uploadTrialBlnfile" id="uploadTrialBlnfile"
+									onchange="this.form.submit()" />
+						
+						
+				</div>
+				<div style="padding-left: 100px; padding-right: 100px;" th:if="${message}">
+		<span th:text="${message}" />
+		 <a href="/file">Download Excel File from MySQL</a>
+		</div>
+				<br> <br> <br>
+				<table class="table table-striped" id="cashbookfiledetails"
+					width="100%" cellspacing="0">
+					<thead>
+						<tr>
+							<th>Audit Checkpoint</th>
+							<th>Status</th>
+							<th>Comments</th>
+							<th>Action</th>
+							<th>Attach document ref</th>
+
+						</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+	</div> -->
+	</form>
+		</div>
+	</section>
+	<div class="row">
+		<div class="col-lg-12">
+			<p class="text-center small tm-copyright-text mb-0">
+				Copyright &copy; <span class="tm-current-year">2020</span> <a href='http://qolarisdata.com/'>Qolaris Data India Pvt Ltd.</a> All Rights Reserved | 
+Designed by <a href='http://confitechsol.com/'>Confitech Solutions</a>
+			</p>
+		</div>
+	</div>
+	</div>
+</body>
+</html>

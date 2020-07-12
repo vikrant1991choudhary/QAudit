@@ -1,0 +1,472 @@
+		/* $.ajax({
+			        url: "/getMultipleCashBookPayment",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#paymentsinglevendor').DataTable().clear().destroy();
+			            $('#paymentsinglevendor').DataTable({
+
+			                data: data,
+			                columns: [
+			                    
+			                    { data: "particulars" },			                    
+			                    { data: "credit" },
+			                    { data: "count" }
+			                ],
+			                "order": [ 2, "desc" ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	 */
+				/* $.ajax({
+			        url: "/getEverydayCashPayment",
+			        type: "GET",
+			        async: false,
+			        contentType: "application/j-son;charset=UTF-8",
+			        dataType: "json",
+			        crossDomain: true,
+			        success: function (data) {
+			            $('#openingbalance').DataTable().clear().destroy();
+			            $('#openingbalance').DataTable({
+			            	
+			                data: data,
+			                
+			                columns: [
+			                    { data: "date" },
+			                    { data: "dailyCash" }	                    
+			                ],
+			                 "columnDefs":[{
+			   	                 "targets":1,//column index
+			   	                 "data":"",
+			   	                 "render":function(data,type,row){
+			   	                var res = (Math.round(data * 100) / 100).toFixed(2);
+			   	                 
+			   	  				  return res;
+			   	              }
+			   	             }],
+			   	          "columnDefs":[{
+			   	                 "targets":0,//column index
+			   	                 "data":"",
+			   	                 "render":function(data,type,row){
+			   	                  var res = data.substring(0, 10) +" "+data.substring(24,28);
+			   	                 
+			   	  				  return res;
+			   	              }
+			   	             }],
+			   	          "order": [ 1, "desc" ],
+			                dom: 'Bfrtip',
+			                buttons: [
+			                    'copy', 'csv', 'excel', 'pdf', 'print'
+			                ]
+			            });
+			        }
+			    });	
+			}); */
+	
+			$('#generateReport').click(function(){
+				$('#generateModal').modal('show');
+			});
+			
+/* function getDoneCashPayment(){
+	var idStatus="1";
+	var idSubStatus="1";
+	var year="2020";
+	var comment = $('#cashpaymentabove').val();
+	console.log(comment);
+	jQuery.ajax({
+			 url: '/getDoneCashPayment',
+	           type: "POST",
+	           async:false,
+	           cache: false,
+	           data: "idStatus="+idStatus+"&idSubStatus="+idSubStatus+"&year="+year+"&comment="+comment,
+	           dataType: "json",
+	           success: function(data) {
+					 
+					  alert("Success Fully Submit");
+					 
+							
+				   },
+				   error: function(e){				           
+					//alert('Error in getColumns: ' + e);		           	
+				    }
+
+			});  
+		
+}	 */
+/* function getDoneMultiplePayment(){
+	var idStatus="1";
+	var idSubStatus="2";
+	var year="2020";
+	var comment = $('#multiplepaymentcomment').val();
+	console.log(comment);
+	jQuery.ajax({
+			 url: '/getDoneMultiplePayment',
+	           type: "POST",
+	           async:false,
+	           cache: false,
+	           data: "idStatus="+idStatus+"&idSubStatus="+idSubStatus+"&year="+year+"&comment="+comment,
+	           dataType: "json",
+	           success: function(data) {
+					 
+					  alert("Success Fully Submit");
+					 
+							
+							
+				   },
+				   error: function(e){				           
+					//alert('Error in getColumns: ' + e);		           	
+				    }
+
+			});  
+		
+}	 */		
+/* function getDoneCashHand(){
+	var idStatus="1";
+	var idSubStatus="3";
+	var year="2020";
+	var comment = $('#cashinhandcomment').val();
+	console.log(comment);
+	jQuery.ajax({
+			 url: '/getDoneCashHand',
+	           type: "POST",
+	           async:false,
+	           cache: false,
+	           data: "idStatus="+idStatus+"&idSubStatus="+idSubStatus+"&year="+year+"&comment="+comment,
+	           dataType: "json",
+	           success: function(data) {
+					 
+					  alert("Success Fully Submit");
+					 
+							
+				   },
+				   error: function(e){				           
+					//alert('Error in getColumns: ' + e);		           	
+				    }
+
+			});  
+		
+} */
+
+/* function showChartEveryday(){
+	loadChartEveryday();
+	$("#openingbalanceDiv").hide();
+	$("#openingbalanceChartDiv").show();
+} */
+
+/* function showGridEveryday(){
+	$("#openingbalanceDiv").show();
+	$("#openingbalanceChartDiv").hide();
+} */
+
+/* function loadChartEveryday(){
+	
+	var credit = new Array();
+	var date = new Array();
+	
+	jQuery.ajax({
+    	url: '/getEverydayCashPayment',
+           type: "GET",
+           async:false,
+           cache: false,
+           dataType: "json",
+           success: function(data) {
+        	   
+        	 // alert("Success");
+        	  var tabHTML = "";
+        	  for(var i=0;i<data.length;i++){
+        		  
+        		 
+        		  credit.push(data[i].dailyCash);
+        		  date.push(data[i].date);
+        		  
+        	  }
+        	 
+           },
+           error: function(e){				           
+       	        alert('Error:' + e);		           	
+       	    }
+   });
+	
+	Highcharts.chart('chart8', {
+
+		chart:{
+			type:'column'
+		},
+	    title: {
+	        text: ''
+	    },
+
+	    subtitle: {
+	        text: ''
+	    },
+
+	    xAxis: {
+	    	title: {
+	            text: 'Date'
+	        },
+	        categories: date,
+	    },
+	    yAxis: {
+	        title: {
+	            text: 'Cash in Hand'
+	        }
+	    },
+
+	    legend: {
+	        layout: 'vertical',
+	        align: 'right',
+	        verticalAlign: 'middle'
+	    },
+
+	    plotOptions: {
+	        line: {
+	            dataLabels: {
+	                enabled: true
+	            },
+	            enableMouseTracking: false
+	        }
+	    },
+
+	    series: [{
+	        name:  'Cash in Hand',
+	        data: JSON.parse("[" + credit + "]")
+	    }]
+
+	});
+	
+
+} */
+
+
+/* function showChartMultiple(){
+	loadChartMultiple();
+	$("#paymentsinglevendorDiv").hide();
+	$("#paymentsinglevendorChartDiv").show();
+} */
+
+
+/* function showGridMultiple(){
+	$("#paymentsinglevendorDiv").show();
+	$("#paymentsinglevendorChartDiv").hide();
+} */
+
+ function loadChartMultiple(){
+	var particular = new Array();
+	var credit = new Array();
+	var count = new Array();
+	
+	jQuery.ajax({
+    	url: '/getMultipleCashBookPayment',
+           type: "GET",
+           async:false,
+           cache: false,
+           dataType: "json",
+           success: function(data) {
+        	   
+        	 // alert("Success");
+        	  var tabHTML = "";
+        	  for(var i=0;i<data.length;i++){
+        		  
+        		  particular.push(data[i].particulars);
+        		  credit.push(data[i].credit);
+        		  count.push(data[i].count);
+        		  
+        	  }
+        	 
+           },
+           error: function(e){				           
+       	        alert('Error:' + e);		           	
+       	    }
+   });
+	
+	Highcharts.chart('chart7', {
+		chart: {
+	        //type: 'column',
+	        zoomType: 'xy'
+	    },
+
+	    title: {
+	        text: ''
+	    },
+
+	    xAxis: {
+	    	title: {
+	            text: 'Particulars'
+	        },
+	        categories: particular
+	    },
+
+	    yAxis: {
+	        allowDecimals: false,
+	        min: 0,
+	        title: {
+	            text: ''
+	        }
+	    },
+
+	    plotOptions: {
+	        column: {
+	            stacking: 'normal'
+	        }
+	    },
+
+		colors: ['#058DC7', '#50B432'],
+
+		credits: {
+			enabled: false
+		},
+
+	    series: [
+		/* {
+	        name: 'Credit',
+			type: 'area',
+	        data: JSON.parse("[" + credit + "]")
+	        //stack: 'stack2'
+	    }, */
+	    {
+	        name: 'No of times',
+	        type: 'column',
+	        data: JSON.parse("[" + count + "]"),
+	       // stack: 'stack1'
+	    }]
+
+	});
+
+	
+
+}
+
+
+function showChart(){
+	loadChart();
+	$("#cashbookfiledetailsaboveDiv").hide();
+	$("#cashbookfiledetailsaboveChartDiv").show();
+}
+function showGrid(){
+	$("#cashbookfiledetailsaboveDiv").show();
+	$("#cashbookfiledetailsaboveChartDiv").hide();
+}
+
+function loadChart(){
+	var particular = new Array();
+	var credit = new Array();
+	
+	jQuery.ajax({
+    	url: '/getCashBookReport',
+           type: "GET",
+           async:false,
+           cache: false,
+           dataType: "json",
+           success: function(data) {
+        	   
+        	 // alert("Success");
+        	  var tabHTML = "";
+        	  for(var i=0;i<data.length;i++){
+        		  
+        		  particular.push(data[i].particulars);
+        		  credit.push(data[i].credit);
+        		  
+        	  }
+        	 
+           },
+           error: function(e){				           
+       	        alert('Error:' + e);		           	
+       	    }
+   });
+	
+	Highcharts.chart('chart6', {
+
+	    title: {
+	        text: ''
+	    },
+
+	    subtitle: {
+	        text: ''
+	    },
+
+	    xAxis: {
+	    	title: {
+	            text: 'Particular'
+	        },
+	        categories: particular,
+	    },
+	    yAxis: {
+	        title: {
+	            text: ''
+	        }
+	    },
+
+	    legend: {
+	        layout: 'vertical',
+	        align: 'right',
+	        verticalAlign: 'middle'
+	    },
+
+	    plotOptions: {
+	        line: {
+	            dataLabels: {
+	                enabled: true
+	            },
+	            enableMouseTracking: false
+	        }
+	    },
+	    tooltip: {
+	        formatter: function () {
+	            return '<b>' + this.x + '</b><br/>' +
+	                this.series.name + ': ' + this.y + '<br/>' +
+	                'Total: ' + this.point.stackTotal;
+	        }
+	    },
+	    series: [{
+	        name:  'Credit',
+	        data: JSON.parse("[" + credit + "]")
+	    }]
+
+	});
+	
+
+}
+
+
+
+function generatePDF(){
+	jQuery.ajax({
+		 url: '/generatePDF',
+          type: "GET",
+          async:false,
+          cache: false,
+          //data: "",
+          dataType: "json",
+          success: function(data) {
+				 
+				 // alert("Success Fully Submit"+data.responseStr);
+				 
+				  window.open(data.responseStr, '_blank');	
+						
+			   },
+			   error: function(e){				           
+				//alert('Error in getColumns: ' + e);		           	
+			    }
+
+		});  
+	
+}
+
+
+/* function openModalCashPaymentabove(){
+	$('#cashpayment').modal('show');
+}
+
+function openMultiplePaymentModal(){
+	$('#cashmultiple').modal('show');
+}
+
+function openCashInHandModal(){
+	$('#cashinhandModal').modal('show');
+} */

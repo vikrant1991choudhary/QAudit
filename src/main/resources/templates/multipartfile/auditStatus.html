@@ -1,0 +1,688 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Audit Status</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<!-- <link rel="icon" type="image/png" href="/images/icons/favicon.ico" /> -->
+<!--===============================================================================================-->
+
+<!-- Modal Script --> 
+<link rel="stylesheet" type="text/css" href="/vendor/bootstrap/css/bootstrap.min.css">
+<script	src="/vendor/jquery/jquery-3.5.1.min.js"></script>
+<script	src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vendor/datatables/dataTables.bootstrap4.min.css">
+<script	src="/vendor/datatables/jquery.dataTables.min.js"></script>
+<script	src="/vendor/datatables/moment.min.js"></script>
+<script	src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+<!-- For charts -->	
+		<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>		
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/css/util.css">
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+<!--===============================================================================================-->
+<script type="text/javascript">
+	
+	function getAuditStatus(e) {
+		e.preventDefault();
+		//var auditMonth = $("#auditMonth>option:selected").val();
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+		
+		var companyName = $("#auditCompany>option:selected").text();
+		var finyear = $("#auditYear>option:selected").text();
+		var comments = '';
+		
+		if (auditYear != '' && auditCompany != '') {
+
+			$('#auditTableDiv').show();
+
+		}
+		//$('#auditTableDiv').hide();
+
+		jQuery.ajax({
+		    url: '/getAuditStatus',
+		    type: "POST",
+		    async: false,
+		    cache: false,
+		    data: "auditYear=" + auditYear + "&auditCompany="
+		     + auditCompany,
+		    dataType: "json",
+		    success: function (data) {
+		        console.log(data.length);
+		        if(data.length == 0){
+		        		
+		                $('#statuscol').html("Pending");
+		                $('#statuscol').css(
+			                    "color",
+			                    "white");
+		                $('#statuscol').css("background-color","rgb(198, 83, 83)");
+		                
+		                $('#bankcol').html("Pending");
+		                $('#bankcol').css(
+			                    "color",
+			                    "white");
+		                $('#bankcol').css(
+			                    "background-color",
+			                    "rgb(198, 83, 83)");
+		                $('#fixedcol').html("Pending");
+		                $('#fixedcol').css(
+			                    "color",
+			                    "white");
+		                $('#fixedcol').css(
+			                    "background-color",
+			                    "rgb(198, 83, 83)");
+		                $('#debtorcol').html("Pending");
+		                $('#debtorcol').css(
+			                    "color",
+			                    "white");
+		                $('#debtorcol').css(
+			                    "background-color",
+			                    "rgb(198, 83, 83)");
+		                $('#processAudit').html("Pending");
+		                $('#processAudit').css("color","#c65353");
+		        }
+		        //alert("Success Fully Submit");
+		        getMorePayCount();
+		        getAssetWithoutbill();
+				if(data.length>0){
+					//enable only upload
+					$("button.uploadbutton").attr("disabled",true);
+				}
+				else{
+					//disable only upload
+					$("button.auditfindings").attr("disabled",true);
+					$("button.auditdatabtn").attr("disabled",true);
+					
+				}
+		        $.each(data, function (index, itemData) {
+		            console
+		            .log(data[index]
+		                 + ": "
+		                 + data[index].sub_status_name
+		                 + "\n");
+
+		            if (data[index].sub_status_name == 'CashPayment Above INR 20000') {
+		                $('#cashabove').css(
+		                    "background-color",
+		                    "green");
+		                $('#cashabove').css("color",
+		                    "white");
+		                $('#statuscol').css(
+		                    "background-color",
+		                    "#f7f767");
+		                $('#statuscol').html("In Progress");
+		                $('#statuscol').css(
+			                    "color",
+			                    "black");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            
+		            if (data[index].sub_status_name == 'Multiple Payments in cash to a Single Vendor') {
+		                $('#multipay').css(
+		                    "background-color",
+		                    "green");
+		                $('#multipay').css("color",
+		                    "white");
+		                $('#statuscol').css(
+		                    "background-color",
+		                    "#f7f767");
+		                $('#statuscol').html("In Progress");
+		                $('#statuscol').css(
+			                    "color",
+			                    "black");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            if (data[index].sub_status_name == 'Cash in Hand everyday Opening Balance + Debit - Credit') {
+		                $('#everyday').css(
+		                    "background-color",
+		                    "green");
+		                $('#everyday').css("color",
+		                    "white");
+		                $('#statuscol').css(
+		                    "background-color",
+		                    "green");
+		                $('#statuscol').css(
+			                    "color",
+			                    "white");
+		                $('#statuscol').html("Complete");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            if (data[index].sub_status_name == 'Check and verify the Monthly bank balances with bank books') {
+		                $('#bankcol').css(
+		                    "background-color",
+		                    "#f7f767");
+		                $('#bankcol').html("In Progress");
+		                $('#bankcol').css(
+			                    "color",
+			                    "black");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            if (data[index].sub_status_name == 'Verify all acquired assets with Supporting bills') {
+		                $('#fixedcol').css(
+		                    "background-color",
+		                    "#f7f767");
+		                $('#fixedcol').html("In Progress");
+		                $('#fixedcol').css(
+			                    "color",
+			                    "black");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            if (data[index].sub_status_name == 'Debtors with credit balances') {
+		                $('#debtorcol').css(
+		                    "background-color",
+		                    "#f7f767");
+		                $('#debtorcol').html("In Progress");
+		                $('#debtorcol').css(
+			                    "color",
+			                    "black");
+		                $('#processAudit').html("In Progress");
+		                $('#processAudit').css("color","#ffc107");
+		            }
+		            
+		            comments = comments + data[index].comment+" ";
+
+		        });
+		        
+		        $('#cashauditcomments').html(comments);
+		        $("#companyfinalabel").html(companyName +" | "+finyear);
+				$('#companyhead').css("display","block");
+		    },
+		    error: function (e) {
+		        //alert('Error in getColumns: ' + e);
+		    }
+
+		});
+	}
+
+	function logout() {
+		window.location.href = "/logout";
+	}
+	function gotoUploadFilePage(){
+		window.location.href = "/uploadfile";
+	}
+	function gotoAuditData(){
+		window.location.href = "/auditDetailsView";
+	}
+	function gotoAuditFindings(){
+		window.location.href = "/auditReport";
+	}
+	function getMorePayCount(){
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+		
+		$.ajax({
+		    url: "/getAbovePaycount?companyId="+auditCompany,
+		    type: "GET",
+		    async: false,
+		    contentType: "application/j-son;charset=UTF-8",
+		    dataType: "json",
+		    crossDomain: true,
+		    success: function (data) {		        
+		        console.log(data);
+		        $("#morepay").text(data);
+		    }
+		});
+	}
+	
+	function getAssetWithoutbill(){
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+		
+		$.ajax({
+		    url: "/getAssetWithoutBilCount?companyid="+auditCompany,
+		    type: "GET",
+		    async: false,
+		    contentType: "application/j-son;charset=UTF-8",
+		    dataType: "json",
+		    crossDomain: true,
+		    success: function (data) {		        
+		        console.log(data);
+		        $("#assetwithoutbill").text(data);
+		    }
+		});
+	}
+	
+	function openerpmodal(){
+		$('#erpmodal').modal('show');
+	}
+	
+	function gotoUrl(){
+		var URL = "https://"+$("#url").val();
+		window.open(URL, '_blank');
+	}
+	
+	/* $('table').on("click","td.expand-button",function(){
+		$('#accordion2').css('display','block');
+		//$(this).next('tr').find('.hiddenRow').show();
+	}); */
+</script>
+<style>
+li {
+	display: inline-block;
+    padding: 12px;
+    cursor:pointer;
+}
+ul#navigatiobar{
+	/* padding:15px; */
+}
+li:hover{
+	background-color: #993c33;
+}
+li#uploadright{
+	float:right;
+	/* padding:0px; */	
+}
+li#companyhead{
+	float:right;
+	/* padding:0px; */	
+}
+.active{
+	background-color:#c65353;
+	
+}
+.actionbtn{
+	width:55px;
+}
+
+
+
+tr:nth-child(odd) {background-color: #efe2e2;}
+/* tr.hide-table-padding td {
+  padding: 0;
+}
+
+.expand-button {
+	position: relative;
+}
+
+.accordion-toggle .expand-button:after
+{
+  position: absolute;
+  left:.75rem;
+  top: 50%;
+  transform: translate(0, -50%);
+  content: '-';
+}
+.accordion-toggle.collapsed .expand-button:after
+{
+  content: '+';
+} */
+</style>
+</head>
+<body>
+
+	<section class="row">
+		<div class="col-lg-12 tm-form-header pl-5 pr-5">
+			<h2 class="tm-container-inner tm-text-color-white" style="font-size:1.5rem">Q -Audit -
+				Audit Summary</h2>
+			<h2 class="tm-container-inner tm-text-color-white"
+				style="float: right"> <span style="font-size: 1rem;">Welcome Admin</span>&nbsp;&nbsp;
+			
+			
+				<button id="logoutbtn" style="color: white;" onclick="logout()">
+					<i class="fa fa-power-off" aria-hidden="true"></i>
+				</button>
+
+			</h2>
+		</div>
+		<div class="col-lg-12 pl-2 pl-sm-3 pl-md-5 pr-2 pr-sm-3 pr-md-5">
+			<div
+				class="row tm-container-inner tm-contact-form">
+				
+				<div class="col-12">
+					<br>
+					<div class="row">
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select name="auditCompany" id="auditCompany">
+									<option value="">Select Company</option>
+									<option value="1">Confitech</option>
+									<option value="2">Qolaris</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select name="auditYear" id="auditYear">
+									<option value="" selected>Select Year</option>
+									<option value="2020" >2019-20</option>
+									<option value="2019">2018-19</option>
+									<option value="2018">2017-18</option>
+
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-sm-2">
+							<div class="upload-btn-wrapper">
+								<button style="padding: 15px;" class="btn"
+									onclick="getAuditStatus(event)">Go</button>
+
+							</div>
+						</div>
+						<div class="col-sm-6" style="text-align:right; padding-top: 40px;padding-bottom: 5px;">
+							<button class="btn" onclick="openerpmodal()" id="erplbl">ERP Link</button>
+						</div>
+					</div>
+				</div>
+				<br>
+				
+				<div class="col-sm-12">
+
+					<!-- Navigation bar -->
+					<ul class="" id="navigatiobar" style="background-color: #993333">
+						<li class="active"><a class="" href="/auditStatus"
+							style="color: white">Audit Summary</a></li>
+						<li class=""><a class="" href="/materiality"
+							style="color: white">Materiality</a></li>
+						<li class=""><a class="" href="/auditArea"
+							style="color: white;">Audit Area</a></li>
+
+						<li class=""><a class="" href="/auditReport"
+							style="color: white">Audit Findings</a></li>
+
+
+						<li class=""><a class="" href="/auditDetailsView"
+							style="color: white">Audit Data</a></li>
+						<!-- <li class="" id="uploadright"><a class="" href="/uploadfile"
+							style="color: white;">Upload File</a></li> -->
+						<li class="" id="companyhead" style="display: none;"><a
+							class="" style="color: white;"><span id="companyfinalabel"></span></a></li>
+					</ul>
+					<!-- Navigation bar -->
+				</div>
+
+				
+
+				
+			</div>
+
+		</div>
+	</section>
+
+
+	<div class="container" id="auditTableDiv" style="display: none">
+		<div>
+		
+		<h3 style="color: #9a0606; font-size: 1rem;">Process Of Audit - <span id="processAudit" style="color:#c65353;">Pending</span></h3><br>
+		<h3  style="color: #9a0606; font-size: 1.5rem;">Audit Areas</h3><br>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<!-- <th>Type</th>
+					<th style="width:30%">CheckPoints</th>
+					<th>Status</th>
+					<th style="width:29%">Comments</th>
+					<th>Action</th> -->
+				</tr>
+			</thead>
+			<tbody>
+				<tr  data-toggle="collapse" data-target="#demo1" class="accordion-toggle">
+					<td>Cash</td>
+					<!-- <td id="cashabove">CashPayment Above INR 20000</td> -->
+					<td id="statuscol" style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id="cashauditcomments"></td> -->
+					<!-- <td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<!-- <tr>
+					<td id="multipay">Multiple Payments in cash to a Single Vendor</td>
+				</tr>
+				<tr>
+					<td id="everyday">Cash in Hand everyday Opening Balance +
+						Debit - Credit</td>
+				</tr> -->
+				<tr>
+					<td>Bank</td>
+					<!-- <td>doucment to be checked</td> -->
+					<td id="bankcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<!-- <tr>
+					<td>Asset to be chedked for Prossesison</td>
+				</tr>
+				<tr>
+					<td>Need to be checked certaily</td>
+
+				</tr> -->
+
+				<tr>
+					<td>Fixed Asset</td>
+					<!-- <td>0.5% of Asset value is checked</td> rowspan -->
+					<td id="fixedcol"  style="background-color:#c65353; color:white;">Pending</td> 
+					<!-- <td rowspan="2" id=""></td>
+					<td rowspan="2">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<!-- <tr>
+
+					<td>Fixed Asset related same checking</td>
+				</tr> -->
+				<tr>
+					<td>Debtors</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<tr>
+					<td>Investments</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<tr>
+					<td>Debtors and other receivables</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<tr>
+					<td>Inventory</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<tr>
+					<td>Loans and Advances</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<tr>
+					<td>Depreciation</td>
+					<!-- <td>Bank statement and closing balance to be matched</td> -->
+					<td id="debtorcol"  style="background-color:#c65353; color:white;">Pending</td>
+					<!-- <td rowspan="3" id=""></td>
+					<td rowspan="3">
+						<button onclick="gotoUploadFilePage()" type="button" class="btn btn-outline-primary actionbtn uploadbutton">
+							<i class="fa fa-upload" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditData()" type="button" class="btn btn-outline-primary actionbtn auditdatabtn">
+							<i class="fa fa-bar-chart" aria-hidden="true"></i>
+						</button>
+						<button onclick="gotoAuditFindings()" type="button" class="btn btn-outline-primary actionbtn auditfindings">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</td> -->
+				</tr>
+				<!-- <tr>
+
+					<td>Unrealised cheque to be verified</td>
+				</tr>
+				<tr>
+
+					<td>same should be verified from their acocunt</td>
+				</tr>   -->
+			</tbody>
+		</table>
+		</div>
+			<br>
+		<div>
+			<h3  style="color: #9a0606; font-size: 1.5rem;">Audit Finding</h3><br>
+			<h3  style="color: #9a0606; font-size: 1rem;">Important Non Compliances/deviations</h3><br>
+			<h4 style="font-size: 1rem;">Cash Above 20,000 - <span id="morepay" style="color:#c65353;"></span> cases</h4>
+			<h4 style="font-size: 1rem;">Asset are purchased without bill: <span id="assetwithoutbill" style="color:#c65353;"></span></h4>
+		</div>
+	</div>
+	<br>
+	<div class="modal fade" id="erpmodal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<!-- <form action="/getDoneDebtorPaymentModal"
+						enctype="multipart/form-data" method="POST">
+						<input type="file" name="debtorfile" id="debtorfile"><br>
+						<br>
+						<textarea rows="5" cols="21" id="debtorabove" name="debtorComment"
+							class="form-control" placeholder="Comments..."></textarea>
+						<br>
+						<button class="btn btn-secondary" style="float: right;">Done</button>
+					</form> -->
+					<label>URL:</label>
+					<input class="form-control" name="url" id="url">
+					<label>Username:</label>
+					<input class="form-control" name="username">
+					<label>Password:</label>
+					<input class="form-control" name="password" type="password">
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" onclick="gotoUrl()">Go</button>
+					<!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<p class="text-center small tm-copyright-text mb-0">
+				Copyright &copy; <span class="tm-current-year">2020</span> <a
+					href='http://qolarisdata.com/'>Qolaris Data India Pvt Ltd.</a> All
+				Rights Reserved | Designed by <a href='http://confitechsol.com/'>Confitech
+					Solutions</a>
+			</p>
+		</div>
+	</div>
+	
+	
+</body>
+</html>

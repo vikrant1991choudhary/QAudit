@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<title>Audit Findings</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<!-- <link rel="icon" type="image/png" href="/images/icons/favicon.ico" /> -->
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/bootstrap/css/bootstrap.min.css">
+<script	src="/vendor/jquery/jquery-3.5.1.min.js"></script>
+<script	src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/vendor/datatables/dataTables.bootstrap4.min.css">
+<script	src="/vendor/datatables/jquery.dataTables.min.js"></script>
+<script	src="/vendor/datatables/moment.min.js"></script>
+<script	src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+<!-- For charts -->	
+		<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>		
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	href="/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/css/util.css">
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+<!--===============================================================================================-->
+<script type="text/javascript">
+			
+	$(document).ready(function() {
+		$('#cashbookfiledetailsabove').DataTable().clear().destroy();
+		$('#cashbookfiledetailsabove').DataTable({
+			"lengthChange": false
+		});
+
+		$('#paymentsinglevendor').DataTable().clear().destroy();
+		$('#paymentsinglevendor').DataTable({
+			"lengthChange": false
+		});
+
+		$('#openingbalance').DataTable().clear().destroy();
+		$('#openingbalance').DataTable({
+			"lengthChange": false
+		});
+		getAuditCompany();
+		
+
+	});
+	
+	function getAuditCompany(){
+		$.ajax({
+			url : "/getAuditCompany",
+			type : "GET",
+			async : false,
+			contentType : "application/j-son;charset=UTF-8",
+			dataType : "json",
+			contentType: "json",
+			crossDomain : true,
+			success : function(data) {
+				console.log(data);
+				$('#auditCompany').val(data.auditCompany);
+				$('#auditYear').val(data.audityear);
+				if(data.auditCompany != ""){
+					showCompanyLabel();
+					getStatus();
+				}
+				
+			}
+		});
+	}
+	
+	function showCompanyLabel(){
+		var companyName = $("#auditCompany>option:selected").text();
+		var finyear = $("#auditYear>option:selected").text();
+		var comments = '';
+		
+		 $("#companyfinalabel").html(companyName +" | "+finyear);
+		 $('#companyhead').css("display","block");
+	}
+	
+	function getAuditStatus(e) {
+		e.preventDefault();
+		getStatus();
+	}
+	
+	function getStatus(){
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+
+		var companyName = $("#auditCompany>option:selected").text();
+		var finyear = $("#auditYear>option:selected").text();
+		
+		$.ajax({
+		    url: "/getCashBookReport?idCompany=" + auditCompany,
+		    type: "GET",
+		    async: false,
+		    contentType: "application/j-son;charset=UTF-8",
+		    dataType: "json",
+		    crossDomain: true,
+		    success: function (data) {
+		        $('#cashbookfiledetailsabove').DataTable().clear()
+		        .destroy();
+		        $('#cashbookfiledetailsabove')
+		        .DataTable({
+
+		            data: data,
+		            columns: [{
+		                    data: "date"
+		                }, {
+		                    data: "txnType"
+		                }, {
+		                    data: "particulars"
+		                }, {
+		                    data: "vchtype"
+		                }, {
+		                    data: "vchno"
+		                }, {
+		                    data: "debit"
+		                }, {
+		                    data: "credit"
+		                }, {
+		                    data: "vchno",
+		                    mRender: function (
+		                        data, type,
+		                        full) {
+		                        return '<button style="width: 55px;" class="btn"><i class="fa fa-paperclip" aria-hidden="true" onclick=openAddSupportingModal("'
+		                         + data
+		                         + '")></i></button>';
+		                    }
+		                }
+		            ],
+		            "columnDefs": [{
+		                    "targets": 0, //column index
+		                    "data": "",
+		                    "render": function (data, type,
+		                        row) {
+		                        var res = data.substring(0,
+		                                10)
+		                             + " "
+		                             + data.substring(
+		                                24, 28);
+
+		                        return res;
+		                    }
+		                },
+		                {
+							"targets" : 6,//column index
+							"data" : "credit",
+							"render" : function(data, type,
+									row) {
+								  data = (Math
+										.round(data * 100) / 100)
+										.toFixed(2); 
+								 
+										 data=data.toString();
+										    var afterPoint = '';
+										    if(data.indexOf('.') > 0)
+										       afterPoint = data.substring(data.indexOf('.'),data.length);
+										    data = Math.floor(data);
+										    data=data.toString();
+										    var lastThree = data.substring(data.length-3);
+										    var otherNumbers = data.substring(0,data.length-3);
+										    if(otherNumbers != '')
+										        lastThree = ',' + lastThree;
+										    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+										    console.log(res);
+										   
+								
+								return res;
+							}
+						}
+		            ],
+		            "order": [6, "desc"],
+		            dom: 'Bfrtip',
+		            buttons: ['copy', 'csv', 'excel',
+		                'pdf', 'print']
+		        });
+		        
+		        
+		    }
+		});
+		$.ajax({
+			url : "/getMultipleCashBookPayment?idCompany=" + auditCompany,
+			type : "GET",
+			async : false,
+			contentType : "application/j-son;charset=UTF-8",
+			dataType : "json",
+			crossDomain : true,
+			success : function(data) {
+				$('#paymentsinglevendor').DataTable().clear().destroy();
+				$('#paymentsinglevendor').DataTable({
+
+					data : data,
+					columns : [
+
+					{
+						data : "particulars"
+					}, {
+						data : "credit"
+					}, {
+						data : "count"
+					} ],
+					"columnDefs" : [ {
+						"targets" : 1,//column index
+						"data" : "credit",
+						"render" : function(data, type,
+								row) {
+							  data = (Math
+									.round(data * 100) / 100)
+									.toFixed(2); 
+							 
+									 data=data.toString();
+									    var afterPoint = '';
+									    if(data.indexOf('.') > 0)
+									       afterPoint = data.substring(data.indexOf('.'),data.length);
+									    data = Math.floor(data);
+									    data=data.toString();
+									    var lastThree = data.substring(data.length-3);
+									    var otherNumbers = data.substring(0,data.length-3);
+									    if(otherNumbers != '')
+									        lastThree = ',' + lastThree;
+									    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+									    console.log(res);
+									   
+							
+							return res;
+						}
+					} ],
+					"order" : [ 2, "desc" ],
+					dom : 'Bfrtip',
+					buttons : [ 'copy', 'csv', 'excel', 'pdf', 'print' ]
+				});
+			}
+		});
+		$
+				.ajax({
+					url : "/getEverydayCashPayment?idCompany=" + auditCompany,
+					type : "GET",
+					async : false,
+					contentType : "application/j-son;charset=UTF-8",
+					dataType : "json",
+					crossDomain : true,
+					success : function(data) {
+						$('#openingbalance').DataTable().clear().destroy();
+						$('#openingbalance')
+								.DataTable(
+										{
+
+											data : data,
+
+											columns : [ {
+												data : "date"
+											}, {
+												data : "dailyCash"
+											} ],
+											"columnDefs" : [ {
+												"targets" : 1,//column index
+												"data" : "",
+												"render" : function(data, type,
+														row) {
+													var res = (Math
+															.round(data * 100) / 100)
+															.toFixed(2);
+
+													return res;
+												}
+											} ],
+											"columnDefs" : [ {
+												"targets" : 0,//column index
+												"data" : "",
+												"render" : function(data, type,
+														row) {
+													var res = data.substring(0,
+															10)
+															+ " "
+															+ data.substring(
+																	24, 28);
+
+													return res;
+												}
+											},
+											{
+												"targets" : 1,//column index
+												"data" : "dailyCash",
+												"render" : function(data, type,
+														row) {
+													  data = (Math
+															.round(data * 100) / 100)
+															.toFixed(2); 
+													 
+															 data=data.toString();
+															    var afterPoint = '';
+															    if(data.indexOf('.') > 0)
+															       afterPoint = data.substring(data.indexOf('.'),data.length);
+															    data = Math.floor(data);
+															    data=data.toString();
+															    var lastThree = data.substring(data.length-3);
+															    var otherNumbers = data.substring(0,data.length-3);
+															    if(otherNumbers != '')
+															        lastThree = ',' + lastThree;
+															    var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+															    console.log(res);
+															   
+													
+													return res;
+												}
+											}],
+											"order" : [ 1, "desc" ],
+											dom : 'Bfrtip',
+											buttons : [ 'copy', 'csv', 'excel',
+													'pdf', 'print' ]
+										});
+					}
+				});
+		$("#companyfinalabel").html(companyName +" | "+finyear);
+		$('#companyhead').css("display","block");
+	}
+	$('#generateReport').click(function() {
+		$('#generateModal').modal('show');
+	});
+
+	function openAddSupportingModal(value) {
+		$('#vccno').val(value);
+		$.ajax({
+			url : "/getSupportingFileDetails?vchno=" + value,
+			type : "GET",
+			async : false,
+			contentType : "application/j-son;charset=UTF-8",
+			dataType : "json",
+			crossDomain : true,
+			success : function(data) {
+				$('#supportinghistory').DataTable().clear().destroy();
+				$('#supportinghistory').DataTable({
+
+					data : data,
+					columns : [ {
+						data : "voucherNo"
+					}, {
+						data : "fileDetails",
+						mRender : function(data, type, full) {
+							//return '<img src="'+data+'">';
+							return "<button style='width: 55px;' class='btn' onclick=downloadfile('"+data+"')><i class='fa fa-download' aria-hidden='true'></i></button>";
+						}
+					}
+					/* { data: "particulars" },
+					{ data: "vchtype" },
+					{ data: "vchno" },
+					{ data: "debit" },
+					{ data: "credit" }	 */
+					],
+					dom : 'Bfrtip',
+					buttons : [ 'copy', 'csv', 'excel', 'pdf', 'print' ]
+				});
+			}
+		});
+		$('#supportingdocmodal').modal('show');
+	}
+
+	function getDoneCashPayment() {
+		var idStatus = "1";
+		var idSubStatus = "1";
+		var year = "2020";
+		var comment = $('#cashpaymentabove').val();
+		//var file = $('#cashpayabove')[0].files[0];
+		console.log(comment);
+		jQuery.ajax({
+			url : '/getDoneCashPayment',
+			type : "POST",
+			async : false,
+			cache : false,
+			data : "idStatus=" + idStatus + "&idSubStatus=" + idSubStatus
+					+ "&year=" + year + "&comment=" + comment,
+			dataType : "json",
+			success : function(data) {
+				alert("Success Fully Submit");
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+	function getDoneMultiplePayment() {
+		var idStatus = "1";
+		var idSubStatus = "2";
+		var year = "2020";
+		var comment = $('#multiplepaymentcomment').val();
+		//var file = $('#cashpaymultiple')[0].files[0];
+		console.log(comment);
+		jQuery.ajax({
+			url : '/getDoneMultiplePayment',
+			type : "POST",
+			async : false,
+			cache : false,
+			data : "idStatus=" + idStatus + "&idSubStatus=" + idSubStatus
+					+ "&year=" + year + "&comment=" + comment,
+			dataType : "json",
+			success : function(data) {
+				alert("Success Fully Submit");
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+	function getDoneCashHand() {
+		var idStatus = "1";
+		var idSubStatus = "3";
+		var year = "2020";
+		var comment = $('#cashinhandcomment').val();
+		//var file = $('#cashinhand')[0].files[0];
+		console.log(comment);
+		jQuery.ajax({
+			url : '/getDoneCashHand',
+			type : "POST",
+			async : false,
+			cache : false,
+			data : "idStatus=" + idStatus + "&idSubStatus=" + idSubStatus
+					+ "&year=" + year + "&comment=" + comment,
+			dataType : "json",
+			success : function(data) {
+
+				alert("Success Fully Submit");
+
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+
+	function showChartEveryday() {
+		loadChartEveryday();
+		$("#openingbalanceDiv").hide();
+		$("#openingbalanceChartDiv").show();
+	}
+
+	function showGridEveryday() {
+		$("#openingbalanceDiv").show();
+		$("#openingbalanceChartDiv").hide();
+	}
+
+	function loadChartEveryday() {
+
+		var credit = new Array();
+		var date = new Array();
+		
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+
+		jQuery.ajax({
+			url : '/getEverydayCashPayment?idCompany='+auditCompany,
+			type : "GET",
+			async : false,
+			cache : false,
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success");
+				var tabHTML = "";
+				for (var i = 0; i < data.length; i++) {
+
+					credit.push(data[i].dailyCash);
+					date.push(data[i].date);
+
+				}
+
+			},
+			error : function(e) {
+				alert('Error:' + e);
+			}
+		});
+
+		Highcharts.chart('chart8', {
+
+			chart : {
+				type : 'column'
+			},
+			title : {
+				text : ''
+			},
+
+			subtitle : {
+				text : ''
+			},
+
+			xAxis : {
+				title : {
+					text : 'Date'
+				},
+				categories : date,
+			},
+			yAxis : {
+				title : {
+					text : 'Cash in Hand'
+				}
+			},
+
+			legend : {
+				layout : 'vertical',
+				align : 'right',
+				verticalAlign : 'middle'
+			},
+
+			plotOptions : {
+				line : {
+					dataLabels : {
+						enabled : true
+					},
+					enableMouseTracking : false
+				}
+			},
+
+			series : [ {
+				name : 'Cash in Hand',
+				data : JSON.parse("[" + credit + "]")
+			} ]
+
+		});
+
+	}
+
+	function showChartMultiple() {
+		loadChartMultiple();
+		$("#paymentsinglevendorDiv").hide();
+		$("#paymentsinglevendorChartDiv").show();
+	}
+
+	function showGridMultiple() {
+		$("#paymentsinglevendorDiv").show();
+		$("#paymentsinglevendorChartDiv").hide();
+	}
+
+	function loadChartMultiple() {
+		var particular = new Array();
+		var credit = new Array();
+		var count = new Array();
+		
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+
+		jQuery.ajax({
+			url : '/getMultipleCashBookPayment?idCompany='+auditCompany,
+			type : "GET",
+			async : false,
+			cache : false,
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success");
+				var tabHTML = "";
+				for (var i = 0; i < data.length; i++) {
+
+					particular.push(data[i].particulars);
+					credit.push(data[i].credit);
+					count.push(data[i].count);
+
+				}
+
+			},
+			error : function(e) {
+				alert('Error:' + e);
+			}
+		});
+
+		Highcharts.chart('chart7', {
+			chart : {
+				//type: 'column',
+				zoomType : 'xy'
+			},
+
+			title : {
+				text : ''
+			},
+
+			xAxis : {
+				title : {
+					text : 'Particulars'
+				},
+				categories : particular
+			},
+
+			yAxis : {
+				allowDecimals : false,
+				min : 0,
+				title : {
+					text : ''
+				}
+			},
+
+			/* tooltip: {
+			    formatter: function () {
+			        return '<b>' + this.x + '</b><br/>' +
+			            this.series.name + ': ' + this.y + '<br/>' +
+			            'Total: ' + this.point.stackTotal;
+			    }
+			}, */
+
+			plotOptions : {
+				column : {
+					stacking : 'normal'
+				}
+			},
+
+			colors : [ '#058DC7', '#50B432' ],
+
+			credits : {
+				enabled : false
+			},
+
+			series : [
+			/* {
+			    name: 'Credit',
+				type: 'area',
+			    data: JSON.parse("[" + credit + "]")
+			    //stack: 'stack2'
+			}, */
+			{
+				name : 'No of times',
+				type : 'column',
+				data : JSON.parse("[" + count + "]"),
+			// stack: 'stack1'
+			} ]
+
+		});
+
+	}
+
+	function showChart() {
+		loadChart();
+		$("#cashbookfiledetailsaboveDiv").hide();
+		$("#cashbookfiledetailsaboveChartDiv").show();
+	}
+	function showGrid() {
+		$("#cashbookfiledetailsaboveDiv").show();
+		$("#cashbookfiledetailsaboveChartDiv").hide();
+	}
+
+	function loadChart() {
+		var particular = new Array();
+		var credit = new Array();
+		
+		var auditYear = $("#auditYear>option:selected").val();
+		var auditCompany = $("#auditCompany>option:selected").val();
+
+		jQuery.ajax({
+			url : '/getCashBookReport?idCompany='+auditCompany,
+			type : "GET",
+			async : false,
+			cache : false,
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success");
+				var tabHTML = "";
+				for (var i = 0; i < data.length; i++) {
+
+					particular.push(data[i].particulars);
+					credit.push(data[i].credit);
+
+				}
+
+			},
+			error : function(e) {
+				alert('Error:' + e);
+			}
+		});
+
+		Highcharts.chart('chart6', {
+
+			title : {
+				text : ''
+			},
+
+			subtitle : {
+				text : ''
+			},
+
+			xAxis : {
+				title : {
+					text : 'Particular'
+				},
+				categories : particular,
+			},
+			yAxis : {
+				title : {
+					text : ''
+				}
+			},
+
+			legend : {
+				layout : 'vertical',
+				align : 'right',
+				verticalAlign : 'middle'
+			},
+
+			plotOptions : {
+				line : {
+					dataLabels : {
+						enabled : true
+					},
+					enableMouseTracking : false
+				}
+			},
+			tooltip : {
+				formatter : function() {
+					return '<b>' + this.x + '</b><br/>' + this.series.name
+							+ ': ' + this.y + '<br/>' + 'Total: '
+							+ this.point.stackTotal;
+				}
+			},
+			series : [ {
+				name : 'Credit',
+				data : JSON.parse("[" + credit + "]")
+			} ]
+
+		});
+
+	}
+
+	function generatePDF() {
+		jQuery.ajax({
+			url : '/generatePDF',
+			type : "GET",
+			async : false,
+			cache : false,
+			//data: "",
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success Fully Submit"+data.responseStr);
+
+				window.open(data.responseStr, '_blank');
+
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+
+	function downloadfile(file){
+
+	//window.open("http://localhost:9093/downloadPDF?fileName="+file, '_blank');
+	window.open("http://jharvis.com:9093/downloadPDF?fileName="+file, '_blank');
+	
+}
+
+	function generatePDF1() {
+		jQuery.ajax({
+			url : '/generatePDF1',
+			type : "GET",
+			async : false,
+			cache : false,
+			//data: "",
+			dataType : "json",
+			success : function(data) {
+
+				// alert("Success Fully Submit"+data.responseStr);
+
+				window.open(data.responseStr, '_blank');
+
+			},
+			error : function(e) {
+				//alert('Error in getColumns: ' + e);		           	
+			}
+
+		});
+
+	}
+
+	function logout() {
+		window.location.href = "/logout";
+	}
+
+	function openModalCashPaymentabove() {
+		$('#cashpayment').modal('show');
+	}
+
+	function openMultiplePaymentModal() {
+		$('#cashmultiple').modal('show');
+	}
+
+	function openCashInHandModal() {
+		$('#cashinhandModal').modal('show');
+	}
+</script>
+<style>
+li {
+	display: inline-block;
+    padding: 12px;
+    cursor:pointer;
+}
+ul#navigatiobar{
+	/* padding:15px; */
+}
+li:hover{
+	background-color: #993c33;
+}
+li#uploadright{
+	float:right;
+	/* padding:0px; */	
+}
+li#companyhead{
+	float:right;
+	/* padding:0px; */	
+}
+.active{
+	background-color:#c65353;
+	
+}
+</style>
+</head>
+<body>
+
+	<section class="row">
+		<div class="col-lg-12 tm-form-header pl-5 pr-5">
+			<h2 class="tm-container-inner tm-text-color-white" style="font-size:1.5rem">Q -Audit - Cash Audit Findings</h2>
+			<h2 class="tm-container-inner tm-text-color-white"
+				style="float: right"> <span style="font-size: 1rem;">Welcome Admin</span>&nbsp;&nbsp;
+			
+				<button id="logoutbtn" style="color: white;" onclick="logout()">
+					<i class="fa fa-power-off" aria-hidden="true"></i>
+				</button>
+
+			</h2>
+		</div>
+		<div class="col-lg-12 pl-2 pl-sm-3 pl-md-5 pr-2 pr-sm-3 pr-md-5">
+			<form 
+				class="row tm-container-inner tm-contact-form">
+				
+				
+		
+			
+				<!-- <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"> -->
+				<div class="col-12">
+					<br>
+					<div class="row">
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select name="auditCompany" id="auditCompany">
+									<option value="">Select Company</option>
+									<option value="1">Confitech</option>
+									<option value="2">Qolaris</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-2">
+							<div class="form-group">
+								<select name="auditYear" id="auditYear">
+									<option value="" selected>Select Year</option>
+									<option value="2020">2019-20</option>
+									<option value="2019">2018-19</option>
+									<option value="2018">2017-18</option>
+
+								</select>
+							</div>
+						</div>
+
+						<div class="col-2">
+							<div class="upload-btn-wrapper">
+								<button style="padding: 15px; width:100px;" class="btn"
+									onclick="getAuditStatus(event)">Go</button>
+
+							</div>
+						</div>
+						<div class="col-6">
+							
+							<div class="upload-btn-wrapper" style="float:right; margin-left:10px;">
+								<button id="generateReport" class="btn" style="padding: 15px;"
+									onclick="generatePDF()">Audit findings Report</button>
+							</div>
+							
+							<div class="upload-btn-wrapper" style="float:right;">
+								<button id="generateReport1" class="btn" style="padding: 15px;"
+									onclick="generatePDF1()">Audit Summary Report</button>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+				
+				<div class="col-sm-12">
+					<!-- Navigation bar -->
+					<ul class="" id="navigatiobar" style="background-color: #993333">
+						<li class=""><a class="" href="/auditStatus"
+							style="color: white">Audit Summary</a></li>
+						<li class=""><a class="" href="/materiality"
+							style="color: white">Materiality</a></li>
+						<li class=""><a class="" href="/auditArea"
+							style="color: white;">Audit Areas</a></li>
+
+						<li class="active"><a class="" href="/auditReport"
+							style="color: white">Audit Findings</a></li>
+
+
+						<li class=""><a class="" href="/auditDetailsView"
+							style="color: white">Audit Data</a></li>
+						<!-- <li class="" id="uploadright"><a class="" href="/uploadfile"
+							style="color: white;">Upload File</a></li> -->
+						<li class="" id="companyhead" style="display: none;"><a
+							class="" style="color: white;"><span id="companyfinalabel"></span></a></li>
+					</ul>
+					<!-- Navigation bar -->
+				</div>
+
+			</form>
+		</div>
+	</section>
+	<div class="container-fluid" style="padding-left:100px;padding-right:100px;">
+		<div class="row">
+			<div class="col-lg-2">
+				<!-- <ul class="" id="sidebar" style="background-color: #993333">
+					<li class="active" style="display: block;"><a class=""
+						href="/auditReport" style="color: white">Cashbook Audit</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/ledgerDetailsView" style="color: white">Ledger Audit</a></li>
+				</ul> -->
+				
+				<ul class="" id="sidebar" style="background-color: #993333">
+					<li class="active" style="display: block;"><a class=""
+						href="/auditReport" style="color: white">Cash</a></li>
+
+					<li class="" style="display: block"><a class=""
+						href="/bankAuditFindings" style="color: white">Bank</a></li>
+						
+					<li class="" style="display: block"><a class=""
+						href="/fixedAssetauditFindings" style="color: white">Fixed Assets</a></li>
+						
+					<li class="" style="display: block"><a class=""
+						href="/debtorsAssetAuditFindings" style="color: white">Debtors</a></li>		
+				</ul>
+			</div>
+			<div class="col-lg-10">
+				<div class="">
+				
+					<!-- <div class="upload-btn-wrapper" style="float: right;">
+						<button id="generateReport1" class="btn"
+							style="padding: 15px;" onclick="generatePDF1()">Audit Summary Report</button>&nbsp;&nbsp;
+						<button id="generateReport" class="btn"
+							style="padding: 15px;" onclick="generatePDF()">Audit findings	Report</button>
+						
+					</div> -->
+					
+				
+				<div class="">
+					
+					<h3 style="color: #9a0606; font-size: 1rem;">Physical verification of balances:</h3>
+					<br>
+					<button class="btn" onclick="showGridMultiple()">Grid View</button>
+					&nbsp;&nbsp;
+					<button class="btn" onclick="showChartMultiple()">Chart
+						View</button>
+					<br>
+					<div id="paymentsinglevendorDiv">
+						<table class="table table-striped" id="paymentsinglevendor"
+							width="100%" cellspacing="0">
+							<thead>
+								<tr>
+
+									<th>Particulars</th>
+									<th>Total Cash Payment (INR)</th>
+									<th>No of Times</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<div id="paymentsinglevendorChartDiv" style="display: none">
+
+						CHART
+						<div id="chart7"></div>
+					</div>
+					<br>
+					<button class="btn" style="float: right;"
+						onclick="openMultiplePaymentModal()">Done</button>
+				</div>
+				<br>
+				<div class="">
+					<br> <br>
+					<h3 style="color: #9a0606; font-size: 1rem;">Abnormality in cash holdings:</h3>
+					<br>
+					<button class="btn" onclick="showGridEveryday()">Grid View</button>
+					&nbsp;&nbsp;
+					<button class="btn" onclick="showChartEveryday()">Chart
+						View</button>
+					<br>
+					<div id="openingbalanceDiv">
+						<table class="table table-striped" id="openingbalance"
+							width="100%" cellspacing="0">
+							<thead>
+								<tr>
+									<th>Date</th>
+									<th>Cash Balance</th>
+
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<div id="openingbalanceChartDiv" style="display: none">
+
+						CHART
+						<div id="chart8"></div>
+					</div>
+					<br>
+					<button class="btn" style="float: right;"
+						onclick="openCashInHandModal()">Done</button>
+				</div>
+				<div class="">
+				<br> <br>
+
+					<h3 style="color: #9a0606; font-size: 1rem;">Making cash payments more than Rs.20,000/-:</h3>
+					<input type="hidden" id="clientCompany" name="clientCompany"
+						value="" /><br>
+					<button class="btn" onclick="showGrid()">Grid View</button>
+					&nbsp;&nbsp;
+					<button class="btn" onclick="showChart()">Chart View</button>
+					<br>
+					<div id="cashbookfiledetailsaboveDiv">
+						<table class="table table-striped" id="cashbookfiledetailsabove"
+							width="100%" cellspacing="0">
+							<thead>
+								<tr>
+									<th>Date</th>
+									<th>Txn Type</th>
+									<th>Particulars</th>
+									<th>Voucher type</th>
+									<th>Voucher no</th>
+									<th>Debit</th>
+									<th>Credit</th>
+									<th>Action</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<div id="cashbookfiledetailsaboveChartDiv" style="display: none">
+
+						CHART
+						<div id="chart6"></div>
+					</div>
+					<br>
+					<br>
+					<button class="btn" style="float: right;"
+						onclick="openModalCashPaymentabove()">Done</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<p class="text-center small tm-copyright-text mb-0">
+				Copyright &copy; <span class="tm-current-year">2020</span> <a href='http://qolarisdata.com/'>Qolaris Data India Pvt Ltd.</a> All Rights Reserved | 
+Designed by <a href='http://confitechsol.com/'>Confitech Solutions</a>
+			</p>
+		</div>
+	</div>
+
+	<!-- Supporting document Modal -->
+	<div class="modal fade" id="supportingdocmodal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Add Supporting</h5>
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					
+					<form action="/uploadSupportingfiles" enctype="multipart/form-data" method="POST" >
+						<input type="hidden" id="vccno" name="vccno"> 
+						<input type="file" name="supportingdocs"><br><br>
+						<textarea rows="5" cols="21" id="supportingcomments" class="form-control" placeholder="Comments..." name="comments"></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form><br><br>
+					<h5 class="modal-title" id="exampleModalLabel">Supporting History</h5><hr>
+					<table class="table table-striped" id="supportinghistory" width="100%"
+						cellspacing="0">
+						<thead>
+							<tr>
+								<th>Voucher No.</th>
+								<th>Files</th>
+
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<!-- <div class="modal-footer">
+					
+					
+				</div> -->
+			</div>
+		</div>
+	</div>
+	
+	<!-- cash in hand Modal -->
+	<div class="modal fade" id="cashinhandModal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form action="/getDoneCashHand" enctype="multipart/form-data" method="POST" >
+					<input type="file" name="cashinhandfile" id="cashinhandfile"><br><br>
+					<textarea rows="5" cols="21"  name="comment" class="form-control" placeholder="Comments..."></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form>
+				</div>
+				<!-- <div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" onclick="getDoneCashHand()">Done</button>
+					
+				</div> -->
+			</div>
+		</div>
+	</div>
+	
+	<!-- Cash payment above 20000 -->
+	<div class="modal fade" id="cashpayment" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form action="/getDoneCashPayment" enctype="multipart/form-data" method="POST" >
+					<input type="file" name="cashpayabovefile" id="getDoneCashPayment"><br><br>
+					<textarea rows="5" cols="21" id="multiplepaymentcomment" name="comment" class="form-control" placeholder="Comments..."></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form>
+				</div>
+
+
+				
+
+				<!-- <div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" onclick="getDoneCashPayment()">Done</button>
+					
+				</div> -->
+			</div>
+		</div>
+	</div>
+	
+	<!-- Multiple payment modal -->
+	<div class="modal fade" id="cashmultiple" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form action="/getDoneMultiplePayment" enctype="multipart/form-data" method="POST" >
+					<input type="file" name="cashMultiFile" id="cashMultiFile"><br><br>
+					<textarea rows="5" cols="21" id="multiplepaymentcomment" name="comment" class="form-control" placeholder="Comments..."></textarea>
+						<br>
+						<button class="btn btn-secondary"
+						 style="float:right; ">Done</button>
+					</form>
+
+				</div>
+
+
+				
+
+
+
+				<!-- <div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" onclick="getDoneMultiplePayment()">Done</button>
+					
+				</div> -->
+			</div>
+		</div>
+	</div>
+</body>
+</html>
